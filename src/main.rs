@@ -1,3 +1,4 @@
+use colored::*;
 use std::io;
 
 #[cfg(not(target_os = "windows"))]
@@ -119,10 +120,8 @@ struct Game {
 }
 
 fn player_turn(player: &Players) {
-    println!(
-        "{} it's your turn, please enter a coordinate in number like a2",
-        player.name
-    )
+    print!("{} ", player.name.cyan());
+    println!("it's your turn, please enter a coordinate in number like a2",)
 }
 
 fn switch_turn(game: &mut Game) {
@@ -133,16 +132,15 @@ fn switch_turn(game: &mut Game) {
     }
 }
 
-fn edit_map(row: &mut String, mark: String) -> bool {
+fn edit_map(row: &mut String, mark: String) {
     *row = mark;
-    true
 }
 
-fn duplication_check() -> bool {
-    println!("Square already used, please try again");
-    false
+fn duplication_check() {
+    println!("{}", "Square already used, please try again".red());
 }
 
+//* Main
 fn main() {
     // Setup GameBoard
     let mut row = vec![vec![String::from(" "); 3]; 3];
@@ -175,15 +173,13 @@ fn main() {
     }
     let player2 = Players::new(player2_name.trim().to_owned(), PlayerMark::O);
 
-    println!("Player1: {}, Player 2: {}", player1.name, player2.name);
+    // Clear Terminal before game begins
+    clear_terminal();
 
+    //* Game logic
     loop {
+        // Create player Input
         let mut player_input = String::new();
-        // First Player start
-        match game.player_turn {
-            Turn::PlayerOne => player_turn(&player1),
-            Turn::PlayerTwo => player_turn(&player2),
-        }
 
         // Players Turn
         let player_next = match game.player_turn {
@@ -191,19 +187,22 @@ fn main() {
             Turn::PlayerTwo => &player2,
         };
 
+        // Draw the first game board in console
         game_board_map(&row);
-        player_turn(&player_next);
 
-        //Dev
-        println!("Dev: Turn of {}", player_next.name);
+        // Setup player turn logic
+        match game.player_turn {
+            Turn::PlayerOne => player_turn(&player1),
+            Turn::PlayerTwo => player_turn(&player2),
+        }
 
-        // Ask input
+        // Ask player input
         io::stdin()
             .read_line(&mut player_input)
             .expect("Failed to read line");
         let player_input = player_input.trim();
 
-        // Find correct coord
+        // Check if player input is correct
         let correct_input = match parse_input(&player_input) {
             Some(position) => {
                 clear_terminal();
@@ -211,18 +210,23 @@ fn main() {
             }
             None => {
                 clear_terminal();
-                println!("Invalid input, please try again");
+                println!("{}", "Invalid input, please try again".red());
                 false
             }
         };
-        let game_won = check_winning_condition(&row, player_next.mark.as_str());
-        if game_won {
-            game_board_map(&row);
-            println!("{} won the game!", &player_next.name);
-            break;
-        }
-        if correct_input {
-            switch_turn(&mut game);
-        }
+
+        // Check if the game is won
+        match check_winning_condition(&row, player_next.mark.as_str()) {
+            true => {
+                game_board_map(&row);
+                println!("{} {}", &player_next.name.green(), "won the game!".green());
+                break;
+            }
+            false => {
+                if correct_input {
+                    switch_turn(&mut game);
+                }
+            }
+        };
     }
 }
