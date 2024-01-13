@@ -26,38 +26,62 @@ fn game_board_map(arr: &Vec<Vec<String>>) {
     println!("      |     |     ");
 }
 
-fn game_winning(arr: &Vec<Vec<String>>, mark: &Players) -> bool {
-    // Horizontal check
-    if arr[0][0] == arr[0][1] && arr[0][1] == arr[0][2] && arr[0][2] == mark.mark.as_str() {
+fn check_winning_condition(board: &[Vec<String>], player_mark: &str) -> bool {
+    // Check horizontal and vertical
+    for i in 0..3 {
+        if (board[i][0] == board[i][1] && board[i][1] == board[i][2] && board[i][0] == player_mark)
+            || (board[0][i] == board[1][i]
+                && board[1][i] == board[2][i]
+                && board[0][i] == player_mark)
+        {
+            return true;
+        }
+    }
+
+    // Check diagonals
+    if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] == player_mark)
+        || (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] == player_mark)
+    {
         return true;
-    };
-    if arr[1][0] == arr[1][1] && arr[1][1] == arr[1][2] && arr[1][2] == mark.mark.as_str() {
-        return true;
-    };
-    if arr[2][0] == arr[2][1] && arr[2][1] == arr[2][2] && arr[2][2] == mark.mark.as_str() {
-        return true;
+    }
+
+    false
+}
+
+fn parse_input(input: &str) -> Option<(usize, usize)> {
+    if input.len() != 2 {
+        return None;
+    }
+
+    let mut chars = input.chars();
+    let first_char = chars.next()?;
+    let second_char = chars.next()?;
+
+    let row = match first_char {
+        'a' | '1' => 0,
+        'b' | '2' => 1,
+        'c' | '3' => 2,
+        _ => return None,
     };
 
-    //Vertical check
-    if arr[0][0] == arr[1][0] && arr[1][0] == arr[2][0] && arr[2][0] == mark.mark.as_str() {
-        return true;
-    };
-    if arr[0][1] == arr[1][1] && arr[1][1] == arr[2][1] && arr[2][1] == mark.mark.as_str() {
-        return true;
-    };
-    if arr[0][2] == arr[1][2] && arr[1][2] == arr[2][2] && arr[2][2] == mark.mark.as_str() {
-        return true;
+    let col = match second_char {
+        '1' | 'a' => 0,
+        '2' | 'b' => 1,
+        '3' | 'c' => 2,
+        _ => return None,
     };
 
-    //Diagonal check
-    if arr[0][0] == arr[1][1] && arr[1][1] == arr[2][2] && arr[2][2] == mark.mark.as_str() {
-        return true;
-    };
-    if arr[0][2] == arr[1][1] && arr[1][1] == arr[2][0] && arr[2][0] == mark.mark.as_str() {
-        return true;
-    };
+    Some((row, col))
+}
 
-    return false;
+fn update_board(row: &mut Vec<Vec<String>>, pos: (usize, usize), mark: String) -> bool {
+    if row[pos.0][pos.1] != " " {
+        duplication_check();
+        false
+    } else {
+        edit_map(&mut row[pos.0][pos.1], mark);
+        true
+    }
 }
 
 #[derive(Debug)]
@@ -107,6 +131,11 @@ fn switch_turn(game: &mut Game) {
     } else {
         return game.player_turn = Turn::PlayerOne;
     }
+}
+
+fn edit_map(row: &mut String, mark: String) -> bool {
+    *row = mark;
+    true
 }
 
 fn duplication_check() -> bool {
@@ -175,94 +204,25 @@ fn main() {
         let player_input = player_input.trim();
 
         // Find correct coord
-        let correct_input: bool = match player_input {
-            // "a1" =>  edit_map(&player_next, &row[0][0]),
-            "a1" | "1a" => {
-                if row[0][0] != " " {
-                    duplication_check()
-                } else {
-                    row[0][0] = player_next.mark.as_str().to_owned();
-                    true
-                }
+        let correct_input = match parse_input(&player_input) {
+            Some(position) => {
+                clear_terminal();
+                update_board(&mut row, position, player_next.mark.as_str().to_owned())
             }
-            "a2" | "2a" => {
-                if row[0][1] != " " {
-                    duplication_check()
-                } else {
-                    row[0][1] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "a3" | "3a" => {
-                if row[0][2] != " " {
-                    duplication_check()
-                } else {
-                    row[0][2] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "b1" | "1b" => {
-                if row[1][0] != " " {
-                    duplication_check()
-                } else {
-                    row[1][0] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "b2" | "2b" => {
-                if row[1][1] != " " {
-                    duplication_check()
-                } else {
-                    row[1][1] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "b3" | "3b" => {
-                if row[1][2] != " " {
-                    duplication_check()
-                } else {
-                    row[1][2] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "c1" | "1c" => {
-                if row[2][0] != " " {
-                    duplication_check()
-                } else {
-                    row[2][0] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "c2" | "2c" => {
-                if row[2][1] != " " {
-                    duplication_check()
-                } else {
-                    row[2][1] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            "c3" | "3c" => {
-                if row[2][2] != " " {
-                    duplication_check()
-                } else {
-                    row[2][2] = player_next.mark.as_str().to_owned();
-                    true
-                }
-            }
-            _ => {
+            None => {
+                clear_terminal();
                 println!("Invalid input, please try again");
                 false
             }
         };
-        let game_won = game_winning(&row, player_next);
+        let game_won = check_winning_condition(&row, player_next.mark.as_str());
         if game_won {
             game_board_map(&row);
-            println!("{} won the game", &player_next.name);
+            println!("{} won the game!", &player_next.name);
             break;
         }
         if correct_input {
             switch_turn(&mut game);
-            clear_terminal();
         }
     }
 }
