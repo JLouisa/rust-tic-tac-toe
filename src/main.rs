@@ -137,7 +137,7 @@ fn edit_map(row: &mut String, mark: String) {
 }
 
 fn duplication_check() {
-    println!("{}", "Square already used, please try again".red());
+    println!("{}", "Position already in used, please try again".red());
 }
 
 //* Main
